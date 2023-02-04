@@ -96,7 +96,7 @@ Compensation from the persistence layer.
             - Exceptions are thrown if employee field is missing or if invalid ID is provided 
             - Based on the scenario error code changes
             - HTTP status 404 with error code 1001 if invalid ID is provided
-            - HTTP status 404 with error code 1003 for missing parameter
+            - HTTP status 400 with error code 1003 for missing parameter
         - READ: /employee/compensation/{id}
             - Exception thrown for Invalid ID
             - Returns 404 with error code 1001
@@ -111,7 +111,9 @@ Compensation from the persistence layer.
             "description": "uri=/employee/compensation"
         }
 ### Exception Handler
-    Custom Exceptions are created - ResourceNotFoundException with error codes
+    Custom Exceptions are created   
+        -ResourceNotFoundException
+        -BadRequestException
     Global Exception Handler - To handle all other exceptions - HttpStatus 500 with error code 1002
 
 ## Delivery
