@@ -106,8 +106,8 @@ Compensation from the persistence layer.
     The Error message has format as below:
         {
             "status": 404,
-            "errorCode": "1001 The resource requested is not found",
-            "message": "Invalid employeeId:  ",
+            "errorCode": "xxxx",
+            "message": "Invalid employeeId: yyyy",
             "description": "uri=/employee/compensation"
         }
 ### Exception Handler
