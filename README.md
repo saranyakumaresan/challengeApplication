@@ -79,7 +79,7 @@ not be persisted.
 
 ### Approach for Task 1
     - REST endpoint to read ReportingStructure : /employee/reports/{id}
-    - getNumberOfReports(args) -> returns the number of Reports for specified employee ID(total of direct and distinct)
+    - getNumberOfReports(args) -> returns the number of Reports with ReportingStructure for specified employee ID(total of direct and distinct)
     - mapEmployeeReportingStructure(args) -> To populate the reportingStructure tree in the response
     - Exception is thrown if Invalid employee ID is provided
 

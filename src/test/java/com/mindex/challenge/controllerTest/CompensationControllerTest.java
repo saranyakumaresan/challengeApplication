@@ -1,61 +1,35 @@
 package com.mindex.challenge.controllerTest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.mindex.challenge.data.Compensation;
 import com.mindex.challenge.data.Employee;
-import com.mindex.challenge.data.ReportingStructure;
+import com.mindex.challenge.exception.BadRequestException;
 import com.mindex.challenge.service.CompensationService;
-import com.mindex.challenge.service.ReportingStructureService;
-import org.hamcrest.Matchers;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-//import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.web.bind.annotation.RequestBody;
-
-
 import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
-
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
-
-
 public class CompensationControllerTest {
     @Autowired
     private MockMvc mockCompensationController;
     private Employee testEmployee, directReportsEmployee1, directReportsEmployee2;
-    LocalDate effDate;
     private Compensation testCompensation;
-//    private String compensationResponseBody;
 
     @MockBean
     private CompensationService compensationService;
@@ -63,10 +37,12 @@ public class CompensationControllerTest {
     public void setup(){
         testEmployee = new Employee();
         testEmployee.setEmployeeId("123456");
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy");
-        formatter = formatter.withLocale(Locale.US);  // Locale specifies human language for translating, and cultural norms for lowercase/uppercase and abbreviations and such. Example: Locale.US or Locale.CANADA_FRENCH
-        effDate = LocalDate.parse("02-21-2023", formatter);
-        testCompensation = new Compensation(testEmployee, 200000, effDate);
+        testCompensation = new Compensation(testEmployee, 200000, LocalDate.now());
+    }
+    @After
+    public void teardown(){
+        testEmployee = null;
+        testCompensation = null;
     }
 
     @Test
@@ -78,15 +54,36 @@ public class CompensationControllerTest {
         this.mockCompensationController.perform(get("/employee/compensation/123456"))
                 .andDo(print()).andExpect(status().isOk());
 
+        // WRITE 201 CREATED
         when(compensationService.create( Mockito.any(Compensation.class)))
                 .thenReturn(testCompensation);
-
-        // WRITE 201 CREATED
-        testCompensation = new Compensation(testEmployee, 120000, null);
-        String body = (new ObjectMapper()).writeValueAsString(testCompensation);
+        String requestJson = "{\"employee\": {\n" +
+                "      \"employeeId\" : \"123456\",\n" +
+                "      \"firstName\" : \"Sara\",\n" +
+                "      \"lastName\" : \"Kumar\",\n" +
+                "      \"position\" : \"SW Dev\",\n" +
+                "      \"department\" : \"Engineering\"\n" +
+                "    },\n" +
+                "    \"salary\": 200000,\n" +
+                "    \"effectiveDate\": \"02/04/2023\"}";
         this.mockCompensationController.perform(post("/employee/compensation")
-                        .contentType(MediaType.APPLICATION_JSON) .content(body))
-               .andExpect(status().isCreated());
+                        .content(requestJson).contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON) )
+                .andExpect(status().isCreated());
+
+        //400 BadRequest Exception
+        when(compensationService.create( Mockito.any(Compensation.class)))
+                .thenThrow( new BadRequestException("Mock 400"));
+        this.mockCompensationController.perform(post("/employee/compensation")
+                        .content(requestJson).contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON) )
+                .andExpect(status().isBadRequest());
+
+        //500 Internal Server Error
+        this.mockCompensationController.perform(post("/employee/compensation")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON) )
+                .andExpect(status().is5xxServerError());
     }
 
 }

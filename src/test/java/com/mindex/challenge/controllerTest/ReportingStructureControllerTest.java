@@ -4,6 +4,7 @@ import com.mindex.challenge.data.Employee;
 import com.mindex.challenge.data.ReportingStructure;
 import com.mindex.challenge.service.ReportingStructureService;
 import org.hamcrest.Matchers;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -56,6 +57,14 @@ public class ReportingStructureControllerTest {
         directReports.add(directReportsEmployee2);
         testEmployee.setDirectReports(directReports);
     }
+
+    @After
+    public void teardown(){
+        testEmployee = null;
+        directReportsEmployee1 = null;
+        directReportsEmployee2 = null;
+    }
+
 
     @Test
     public void reportingStructureControllerTest() throws Exception {

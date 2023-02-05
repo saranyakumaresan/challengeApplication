@@ -19,6 +19,7 @@ public class ReportingStructureServiceImpl implements ReportingStructureService 
 
     @Autowired
     private EmployeeRepository employeeRepository;
+    private int numberOfReportsTotal =0;
 
     @Override
     public ReportingStructure read(String id) {
@@ -39,22 +40,17 @@ public class ReportingStructureServiceImpl implements ReportingStructureService 
         List<Employee> directReports = employee.getDirectReports();
 
         if(directReports!=null){
-            numberOfReports = directReports.size();
-            numberOfReports += directReports.stream()
-                    .map(emp -> employeeRepository.findByEmployeeId(emp.getEmployeeId()))
-                    .filter(emp -> (emp.getDirectReports()) != null)
-                    .mapToInt(emp -> emp.getDirectReports().size()).sum();
-
-            mapEmployeeReportingStructure(directReports);
+          numberOfReports =  mapEmployeeReportingStructure(directReports);
+          LOG.debug("Number of Reports [{}]", numberOfReports);
+          numberOfReportsTotal = 0;
         }
-        LOG.debug("Number of Reports", numberOfReports);
-
 
         return (new ReportingStructure(employee, numberOfReports));
 
     }
 
-    private void mapEmployeeReportingStructure(List<Employee> directReports) {
+    private int mapEmployeeReportingStructure(List<Employee> directReports) {
+        numberOfReportsTotal  += directReports.size();
         directReports.forEach(emp -> {
             Employee e = employeeRepository.findByEmployeeId(emp.getEmployeeId());
             emp.setFirstName(e.getFirstName());
@@ -66,8 +62,6 @@ public class ReportingStructureServiceImpl implements ReportingStructureService 
                 mapEmployeeReportingStructure(e.getDirectReports());
             }
         });
-
-
+        return numberOfReportsTotal;
     }
-
 }

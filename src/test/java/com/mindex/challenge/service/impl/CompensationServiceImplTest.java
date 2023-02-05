@@ -50,15 +50,12 @@ public class CompensationServiceImplTest {
         testCompensation = new Compensation();
         testCompensation.setEmployee(employeeRepository.findByEmployeeId("03aa1462-ffa9-4978-901b-7c001562cf6f"));
         testCompensation.setSalary(130000);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy");
-        formatter = formatter.withLocale(Locale.US);  // Locale specifies human language for translating, and cultural norms for lowercase/uppercase and abbreviations and such. Example: Locale.US or Locale.CANADA_FRENCH
-        effDate = LocalDate.parse("02-21-2023", formatter);
-        testCompensation.setEffectiveDate(effDate);
+        testCompensation.setEffectiveDate(LocalDate.now());
     }
 
     @After
     public void teardown(){
-        compensationUrl = null;
+        compensationIdUrl = null;
         compensationUrl = null;
         testCompensation = null;
         effDate = null;
@@ -76,6 +73,18 @@ public class CompensationServiceImplTest {
         assertNotNull(createdCompensation);
         assertCompensationEquivalence(testCompensation, createdCompensation);
 
+        //Create 404 NOT FOUND
+        Employee employee = new Employee();
+        employee.setEmployeeId("123456");
+        Compensation test = new Compensation(employee, 102500, LocalDate.now());
+        ResponseEntity<Compensation> compensationResponseEntity =
+                restTemplate.postForEntity(compensationUrl, test, Compensation.class);
+        assertEquals(HttpStatus.NOT_FOUND, compensationResponseEntity.getStatusCode());
+
+        //Create Compensation Record - 400 Bad Request
+        ResponseEntity<Compensation> compensationResponseEntity1=
+                restTemplate.postForEntity(compensationUrl, new Compensation(), Compensation.class);
+        assertEquals(HttpStatus.BAD_REQUEST, compensationResponseEntity1.getStatusCode());
 
         // Read checks 200 OK
         ResponseEntity<Compensation> readEmployeeCompensationEntity =
@@ -93,7 +102,6 @@ public class CompensationServiceImplTest {
         ResponseEntity<Compensation> compensationRecordNotFound =
                 restTemplate.getForEntity(compensationIdUrl, Compensation.class,"c0c2293d-16bd-4603-8e08-638a9d18b22c");
         assertEquals(HttpStatus.NOT_FOUND, compensationRecordNotFound.getStatusCode());
-
 
     }
       private static void assertCompensationEquivalence(Compensation expected, Compensation actual){
